@@ -1,0 +1,36 @@
+#########################################################################
+# title: Collect_VS_Info                                                #
+# author: Dario Garrido                                                 #
+# date: 20200409                                                        #
+# description: Collect VS info from an already kwown VS name            #
+#########################################################################
+
+import re
+from f5.bigip import ManagementRoot
+
+# ----------------------------------------------------------
+
+session = ManagementRoot("F5_mgmt_IP","username","password",token=True)
+
+virtual = session.tm.ltm.virtuals.virtual.load(name='testVS', partition='Common')
+# https:// <F5_mgmt_IP>/mgmt/tm/ltm/virtual/~Common~testVS
+poolname = re.search('[^\/]+$', virtual.pool).group(0)
+pool = session.tm.ltm.pools.pool.load(name=poolname, partition='Common')
+# https:// <F5_mgmt_IP>/mgmt/tm/ltm/virtual/~Common~testPool
+print("Name: {}".format(virtual.name))
+print("Partition: {}".format(virtual.partition))
+print("FullPath: {}".format(virtual.fullPath))
+print("Destination: {}".format(virtual.destination))
+for rule in virtual.rules:
+	print("Rule: {}".format(rule))
+for persist in virtual.persist:
+	print("Persistence: {}".format(persist['name']))
+for profile in virtual.profiles_s.get_collection():
+	# https:// <F5_mgmt_IP>/mgmt/tm/ltm/virtual/~Common~testVS/profiles
+	print("Profile: {}".format(profile.name))
+print("Pool: {}".format(virtual.pool))
+for member in pool.members_s.get_collection():
+	# https:// <F5_mgmt_IP>/mgmt/tm/ltm/virtual/~Common~testPool/members
+	print("Member: {}".format(member.name))
+
+# ----------------------------------------------------------
