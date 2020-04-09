@@ -50,49 +50,49 @@ for virtual in virtuals:
 			listClientSsl_inUse.append(profile.name)
 		if profile.name in listServerSsl:
 			listServerSsl_inUse.append(profile.name)
-		if listClientSsl_inUse:
-			for prof in listClientSsl_inUse:
-				print("Client SSL: {}".format(prof))
+	if listClientSsl_inUse:
+		for prof in listClientSsl_inUse:
+			print("Client SSL: {}".format(prof))
+	else:
+		print("Client SSL: None")
+	if listServerSsl_inUse:
+		for prof in listServerSsl_inUse:
+			print("Server SSL: {}".format(prof))
+	else:
+		print("Server SSL: None")
+	if hasattr(virtual, 'rules'):
+		for rule in virtual.rules:
+			print("Rule: {}".format(re.search('[^\/]+$', rule).group(0)))
+	else:
+		print("Rule: None")
+	if hasattr(virtual, 'persist'):
+		for persist in virtual.persist:
+			print("Persistence: {}".format(persist['name']))
+	else:
+		print("Persistence: None")
+	if hasattr(virtual, 'pool'):
+		print("Pool: {}".format(re.search('[^\/]+$', virtual.pool).group(0)))
+		if hasattr(virtual, 'subPath'):
+			poolName = virtual.pool.split("/")[3]
+			poolSubpath = virtual.pool.split("/")[2]
+			poolPartition = virtual.pool.split("/")[1]
+			pool = session.tm.ltm.pools.pool.load(name=poolName, subPath=poolSubpath, partition=poolPartition)
+			# https:// <F5_mgmt_IP>/mgmt/tm/ltm/pool/<pool_name>
 		else:
-			print("Client SSL: None")
-		if listServerSsl_inUse:
-			for prof in listServerSsl_inUse:
-				print("Server SSL: {}".format(prof))
+			poolName = virtual.pool.split("/")[2]
+			poolPartition = virtual.pool.split("/")[1]
+			pool = session.tm.ltm.pools.pool.load(name=poolName, partition=poolPartition)
+			# https:// <F5_mgmt_IP>/mgmt/tm/ltm/pool/<pool_name>
+		poolMembers = pool.members_s.get_collection()
+		# https:// <F5_mgmt_IP>/mgmt/tm/ltm/pool/<pool_name>/members
+		if poolMembers:
+			for member in poolMembers:
+				print("Member: {}".format(member.name))
 		else:
-			print("Server SSL: None")
-		if hasattr(virtual, 'rules'):
-			for rule in virtual.rules:
-				print("Rule: {}".format(re.search('[^\/]+$', rule).group(0)))
-		else:
-			print("Rule: None")
-		if hasattr(virtual, 'persist'):
-			for persist in virtual.persist:
-				print("Persistence: {}".format(persist['name']))
-		else:
-			print("Persistence: None")
-		if hasattr(virtual, 'pool'):
-			print("Pool: {}".format(re.search('[^\/]+$', virtual.pool).group(0)))
-			if hasattr(virtual, 'subPath'):
-				poolName = virtual.pool.split("/")[3]
-				poolSubpath = virtual.pool.split("/")[2]
-				poolPartition = virtual.pool.split("/")[1]
-				pool = session.tm.ltm.pools.pool.load(name=poolName, subPath=poolSubpath, partition=poolPartition)
-				# https:// <F5_mgmt_IP>/mgmt/tm/ltm/pool/<pool_name>
-			else:
-				poolName = virtual.pool.split("/")[2]
-				poolPartition = virtual.pool.split("/")[1]
-				pool = session.tm.ltm.pools.pool.load(name=poolName, partition=poolPartition)
-				# https:// <F5_mgmt_IP>/mgmt/tm/ltm/pool/<pool_name>
-			poolMembers = pool.members_s.get_collection()
-			# https:// <F5_mgmt_IP>/mgmt/tm/ltm/pool/<pool_name>/members
-			if poolMembers:
-				for member in poolMembers:
-					print("Member: {}".format(member.name))
-			else:
-				print("Member: None")
-		else:
-			print("Pool: None")
 			print("Member: None")
+	else:
+		print("Pool: None")
+		print("Member: None")
 print("------------")
 
 # ----------------------------------------------------------
