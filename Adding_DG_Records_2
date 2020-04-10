@@ -2,7 +2,7 @@
 # title: Adding_DG_Records_2                                            #
 # author: Dario Garrido                                                 #
 # date: 20200410                                                        #
-# description: Adding DG Records into an existing DataGroup             #
+# description: Adding DG Records (pair values) into an existing DG      #
 #########################################################################
 
 from f5.bigip import ManagementRoot
