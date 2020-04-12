@@ -46,7 +46,7 @@ def download(mode, host, creds, filepath):
 			headers['Content-Range'] = content_range
 			# Lauch REST request
 			try:
-				response = requests.get(uri,auth=creds,headers=headers,verify=False,stream=True, timeout=10)
+				response = requests.get(uri, auth=creds, headers=headers, verify=False, stream=True, timeout=10)
 			except requests.exceptions.ConnectTimeout:
 				print("Connection Timeout")
 				break
