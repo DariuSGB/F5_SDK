@@ -15,14 +15,17 @@ import os, requests, argparse
 # POST https:// localhost/mgmt/cm/autodeploy/sotfware-image-downloads/<filename>
 # Content-type: application/octet-stream
 # Content-Range: <start>-<end>/<file_size>
+# PAYLOAD = <RAW_FILE_DATA>
 # -----------------------------------------
 # POST https:// localhost/mgmt/shared/file-transfer/ucs-downloads/<filename>
 # Content-type: application/octet-stream
 # Content-Range: <start>-<end>/<file_size>
+# PAYLOAD = <RAW_FILE_DATA>
 # -----------------------------------------
 # POST https:// localhost/mgmt/shared/file-transfer/uploads/<filename>
 # Content-type: application/octet-stream
 # Content-Range: <start>-<end>/<file_size>
+# PAYLOAD = <RAW_FILE_DATA>
 
 def upload(mode, host, creds, filepath):
 	# Initialize variables
