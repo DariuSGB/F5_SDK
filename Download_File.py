@@ -92,10 +92,10 @@ def download(mode, host, creds, filepath):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Download File from BIG-IP')
-	parser.add_argument("host", type=str, help='BIG-IP IP or Hostname')
-	parser.add_argument("username", type=str, help='BIG-IP Username')
-	parser.add_argument("password", type=str, help='BIG-IP Password')
-	parser.add_argument("filename", type=str, help='Source filename to download')
+	parser.add_argument("host", help='BIG-IP IP or Hostname')
+	parser.add_argument("username", help='BIG-IP Username')
+	parser.add_argument("password", help='BIG-IP Password')
+	parser.add_argument("filename", help='Source filename to download')
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('-i', '--image', action='store_true', help='Select to download a SW Image file -- /shared/images/ (default)')
 	group.add_argument('-u', '--ucs', action='store_true', help='Select to download a UCS file -- /var/local/ucs/')
