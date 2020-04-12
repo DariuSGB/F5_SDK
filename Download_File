@@ -3,6 +3,7 @@
 # author: Dario Garrido                                                                     #
 # date: 20200412                                                                            #
 # description: Download files from Big-IP                                                   #
+# usage: file_download.py [-h] [-i | -u] host username password filename                    #
 # https://devcentral.f5.com/s/articles/demystifying-icontrol-rest-part-5-transferring-files #
 #############################################################################################
 
@@ -15,7 +16,7 @@ def download(mode, host, creds, filepath):
 	chunk_size = 512 * 1024
 	start = 0
 	end = chunk_size - 1
-	size = 0
+	size = -1
 	current_bytes = 0
 	headers = {
 		'Content-Type': 'application/octet-stream'
@@ -31,7 +32,6 @@ def download(mode, host, creds, filepath):
 	# Create file buffer
 	with open(filepath, 'wb') as fileobj:
 		while True:
-			print("start: %s, end: %s, size: %s, chunk_size: %s, current_bytes: %s" % (start, end, size, chunk_size, current_bytes))
 			# Set new content range header
 			content_range = "%s-%s/%s" % (start, end, size)
 			headers['Content-Range'] = content_range
@@ -52,7 +52,7 @@ def download(mode, host, creds, filepath):
 						fileobj.write(chunk)
 				# Once we've downloaded the entire file, we can break out of
 				# the loop
-					if end == size:
+					if end == size - 1:
 						break
 			else:
 				# Response status 400 (Bad Request)
@@ -60,42 +60,43 @@ def download(mode, host, creds, filepath):
 				break
 			crange = response.headers['Content-Range']
 			# Determine the total number of bytes to read
-			if size == 0:
-				size = int(crange.split('/')[-1]) - 1
+			if size == -1:
+				size = int(crange.split('/')[-1])
 				# Stops if the file is empty
-				if size == -1: break
+				if size == 0:
+					break
 				# If the file is smaller than the chunk size, BIG-IP will
 				# return an HTTP 400. So adjust the chunk_size down to the
 				# total file size...
 				if chunk_size > size:
-					end = size
+					end = size - 1
 				# ...and pass on the rest of the code
 				continue
 			start += chunk_size
 			# Check if you are in your last chunk
-			if (current_bytes + chunk_size) > size:
-				end = size
+			if (current_bytes + chunk_size) > size - 1:
+				end = size - 1
 			else:
 				end = start + chunk_size - 1
 
 # ----------------------------------------------------------
 
 if __name__ == "__main__":
-	mode = 1
 	parser = argparse.ArgumentParser(description='Download File from BIG-IP')
-	parser.add_argument("-i", help='Select to download SW Image file (default option)')
-	parser.add_argument("-u", help='Select to download UCS file')
-	parser.add_argument("host", help='BIG-IP IP or Hostname')
-	parser.add_argument("username", help='BIG-IP Username')
-	parser.add_argument("password", help='BIG-IP Password')
-	parser.add_argument("filepath", help='Filename & Path')
+	parser.add_argument("host", type=str, help='BIG-IP IP or Hostname')
+	parser.add_argument("username", type=str, help='BIG-IP Username')
+	parser.add_argument("password", type=str, help='BIG-IP Password')
+	parser.add_argument("filename", type=str, help='Source filename to download')
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument('-i', '--image', action='store_true', help='Select to download a SW Image file -- /shared/images/ (default)')
+	group.add_argument('-u', '--ucs', action='store_true', help='Select to download a UCS file -- /var/local/ucs/')
 	args = vars(parser.parse_args())
-
+	if args['ucs']: mode = 1
+	else: mode = 0
 	hostname = args['host']
 	username = args['username']
 	password = args['password']
-	filepath = args['filepath']
-
-	download(mode, hostname, (username, password), filepath)
+	filename = args['filename']
+	download(mode, hostname, (username, password), filename)
 
 # ----------------------------------------------------------
