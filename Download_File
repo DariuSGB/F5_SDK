@@ -3,7 +3,7 @@
 # author: Dario Garrido                                                                     #
 # date: 20200412                                                                            #
 # description: Download files from Big-IP                                                   #
-# usage: file_download.py [-h] [-i | -u] host username password filename                    #
+# usage: Download_File.py [-h] [-i | -u] host username password filename                    #
 # https://devcentral.f5.com/s/articles/demystifying-icontrol-rest-part-5-transferring-files #
 #############################################################################################
 
