@@ -79,7 +79,7 @@ def upload(mode, host, creds, filepath):
 # ----------------------------------------------------------
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Upload File from BIG-IP')
+	parser = argparse.ArgumentParser(description='Upload File to BIG-IP')
 	parser.add_argument("host", help='BIG-IP IP or Hostname')
 	parser.add_argument("username", help='BIG-IP Username')
 	parser.add_argument("password", help='BIG-IP Password')
