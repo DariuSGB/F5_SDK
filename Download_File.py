@@ -11,6 +11,15 @@ import os, requests, argparse
 
 # ----------------------------------------------------------
 
+# >> iControlREST - DOWNLOADING FILE
+# GET https:// localhost/mgmt/cm/autodeploy/sotfware-image-downloads/<filename>
+# Content-type: application/octet-stream
+# Content-Range: <start>-<end>/<file_size>
+# -----------------------------------------
+# GET https:// localhost/mgmt/shared/file-transfer/ucs-downloads/<filename>
+# Content-type: application/octet-stream
+# Content-Range: <start>-<end>/<file_size>
+
 def download(mode, host, creds, filepath):
 	# Initialize variables
 	chunk_size = 512 * 1024
