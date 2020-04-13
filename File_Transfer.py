@@ -82,7 +82,7 @@ def _download(location, host, creds, filepath):
 						break
 			else:
 				# Response status 400 (Bad Request)
-				print("Bad Request. Maybe the file doesn't exist.")
+				print("Bad Request(400). Check filepath, credentials, ...")
 				break
 			crange = response.headers['Content-Range']
 			# Determine the total number of bytes to read
@@ -105,7 +105,6 @@ def _download(location, host, creds, filepath):
 			else:
 				end = start + chunk_size - 1
 
-# ----------------------------------------------------------
 
 def _upload(location, host, creds, filepath):
 	# Initialize variables
@@ -142,28 +141,37 @@ def _upload(location, host, creds, filepath):
 		content_range = "%s-%s/%s" % (start, end - 1, size)
 		headers['Content-Range'] = content_range
 		# Lauch REST request
-		requests.post(uri, auth=creds, data=file_slice, headers=headers, verify=False, timeout=10)
+		try:
+			response = requests.post(uri, auth=creds, data=file_slice, headers=headers, verify=False, timeout=10)
+			if response.status_code != 200:
+				# Response status 400 (Bad Request)
+				print("Bad Request(400). Check filepath, credentials, ...")
+				break
+		except requests.exceptions.ConnectTimeout:
+			print("Connection Timeout.")
+			break
 		# Shift to next slice
 		start += current_bytes
+
 
 # ----------------------------------------------------------
 
 if __name__ == "__main__":
-	# Disable SSL warnings
+	# Disable SSL Warnings
 	requests.packages.urllib3.disable_warnings()
 	# Configure parsers
 	parser = argparse.ArgumentParser(description='Transfer File from/to BIG-IP')
-	parser.add_argument("mode", help='select mode \'download\' or \'upload\'')
+	parser.add_argument("mode", help='Select mode \'download\' or \'upload\'')
 	parser.add_argument("host", help='BIG-IP IP or Hostname')
 	parser.add_argument("username", help='BIG-IP Username')
 	#parser.add_argument("password", help='BIG-IP Password')
 	parser.add_argument("filepath", help='filename & path')
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('-i', '--image', action='store_true',
-					help='select location for SW Image/MD5 file -- /shared/images/')
-	group.add_argument('-u', '--ucs', action='store_true', help='select location for UCS file -- /var/local/ucs/')
+					   help='Select location as SW Image/MD5 file -- /shared/images/')
+	group.add_argument('-u', '--ucs', action='store_true', help='Select location as UCS file -- /var/local/ucs/')
 	group.add_argument('-g', '--general', action='store_true',
-					help='select location for general stuff -- /var/config/rest/downloads/')
+					   help='Select location as general stuff -- /var/config/rest/downloads/')
 	args = vars(parser.parse_args())
 	# Set variables
 	mode = args['mode']
@@ -210,5 +218,5 @@ if __name__ == "__main__":
 		_upload(location, hostname, (username, password), filepath)
 	else:
 		print('Transfer mode not supported.')
-	
+
 # ----------------------------------------------------------
