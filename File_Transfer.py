@@ -153,17 +153,17 @@ if __name__ == "__main__":
 	requests.packages.urllib3.disable_warnings()
 	# Configure parsers
 	parser = argparse.ArgumentParser(description='Transfer File from/to BIG-IP')
-	parser.add_argument("mode", help='Select mode \'download\' or \'upload\'')
+	parser.add_argument("mode", help='select mode \'download\' or \'upload\'')
 	parser.add_argument("host", help='BIG-IP IP or Hostname')
 	parser.add_argument("username", help='BIG-IP Username')
 	#parser.add_argument("password", help='BIG-IP Password')
 	parser.add_argument("filepath", help='filename & path')
 	group = parser.add_mutually_exclusive_group()
 	group.add_argument('-i', '--image', action='store_true',
-					help='Select location as SW Image/MD5 file -- /shared/images/')
-	group.add_argument('-u', '--ucs', action='store_true', help='Select location as UCS file -- /var/local/ucs/')
+					help='select location for SW Image/MD5 file -- /shared/images/')
+	group.add_argument('-u', '--ucs', action='store_true', help='select location for UCS file -- /var/local/ucs/')
 	group.add_argument('-g', '--general', action='store_true',
-					help='Select location as general stuff -- /var/config/rest/downloads/')
+					help='select location for general stuff -- /var/config/rest/downloads/')
 	args = vars(parser.parse_args())
 	# Set variables
 	mode = args['mode']
