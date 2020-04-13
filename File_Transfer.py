@@ -79,6 +79,7 @@ def _download(location, host, creds, filepath):
 					# Once we've downloaded the entire file, we can break out of
 					# the loop
 					if end == size - 1:
+						print("Successful Transfer.")
 						break
 			else:
 				# Response status 400 (Bad Request)
@@ -90,6 +91,7 @@ def _download(location, host, creds, filepath):
 				size = int(crange.split('/')[-1])
 				# Stops if the file is empty
 				if size == 0:
+					print("Successful Transfer.")
 					break
 				# If the file is smaller than the chunk size, BIG-IP will
 				# return an HTTP 400. So adjust the chunk_size down to the
@@ -105,6 +107,7 @@ def _download(location, host, creds, filepath):
 			else:
 				end = start + chunk_size - 1
 
+# ----------------------------------------------------------
 
 def _upload(location, host, creds, filepath):
 	# Initialize variables
@@ -130,6 +133,7 @@ def _upload(location, host, creds, filepath):
 		# Slice source file
 		file_slice = fileobj.read(chunk_size)
 		if not file_slice:
+			print("Successful Transfer.")
 			break
 		# Check file boundaries
 		current_bytes = len(file_slice)
@@ -152,7 +156,6 @@ def _upload(location, host, creds, filepath):
 			break
 		# Shift to next slice
 		start += current_bytes
-
 
 # ----------------------------------------------------------
 
