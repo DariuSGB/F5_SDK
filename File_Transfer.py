@@ -7,7 +7,7 @@
 # https://devcentral.f5.com/s/articles/BIG-IP-File-Transfers            #
 #########################################################################
 
-import os, requests, argparse, getpass
+import os, requests, argparse, getpass, json
 
 # ----------------------------------------------------------
 
@@ -36,6 +36,17 @@ import os, requests, argparse, getpass
 # Content-Range: <start>-<end>/<file_size>
 # PAYLOAD = <RAW_FILE_DATA>
 
+# >> iControlREST - GETTING TOKEN
+# POST https:// localhost/mgmt/shared/authn/login
+# Content-type: application/json
+# PAYLOAD = {username: <RAW_FILE_DATA>, password: <PASSWORD>, loginProviderName: tmos}
+
+# >> iControlREST - EXTENDING TOKEN VALIDITY
+# POST https:// localhost/mgmt/shared/authz/tokens/<TOKEN>
+# X-F5-Auth-Token: <TOKEN>
+# Content-type: application/json
+# PAYLOAD = {timeout: <NEW_TIME>}
+
 # ----------------------------------------------------------
 
 def _download(location, host, creds, filepath):
@@ -46,6 +57,7 @@ def _download(location, host, creds, filepath):
 	size = -1
 	current_bytes = 0
 	headers = {
+		'X-F5-Auth-Token': creds,
 		'Content-Type': 'application/octet-stream'
 	}
 	filename = os.path.basename(filepath)
@@ -63,7 +75,7 @@ def _download(location, host, creds, filepath):
 			headers['Content-Range'] = content_range
 			# Lauch REST request
 			try:
-				response = requests.get(uri, auth=creds, headers=headers, verify=False, stream=True, timeout=10)
+				response = requests.get(uri, headers=headers, verify=False, stream=True, timeout=10)
 			except requests.exceptions.ConnectTimeout:
 				print("Connection Timeout.")
 				break
@@ -99,6 +111,12 @@ def _download(location, host, creds, filepath):
 				if chunk_size > size:
 					end = size - 1
 				# ...and pass on the rest of the code
+				# Extend token validity
+				if size > 800000000:
+					if _extendToken(host,creds) == 200:
+						print("Token validity extended.")
+					else:
+						print("Error extending token validity.")
 				continue
 			start += chunk_size
 			# Check if you are in your last chunk
@@ -117,6 +135,7 @@ def _upload(location, host, creds, filepath):
 	size = os.path.getsize(filepath)
 	current_bytes = 0
 	headers = {
+		'X-F5-Auth-Token': creds,
 		'Content-Type': 'application/octet-stream'
 	}
 	filename = os.path.basename(filepath)
@@ -127,6 +146,12 @@ def _upload(location, host, creds, filepath):
 		2: '/mgmt/shared/file-transfer/uploads/'
 	}
 	uri = 'https://{}'.format(host) + select_uri[location] + filename
+	# Extend token validity
+	if size > 800000000:
+		if _extendToken(host, creds) == 200:
+			print("Token validity extended.")
+		else:
+			print("Error extending token validity.")
 	# Create file buffer
 	fileobj = open(filepath, 'rb')
 	while True:
@@ -146,16 +171,57 @@ def _upload(location, host, creds, filepath):
 		headers['Content-Range'] = content_range
 		# Lauch REST request
 		try:
-			response = requests.post(uri, auth=creds, data=file_slice, headers=headers, verify=False, timeout=10)
+			response = requests.post(uri, data=file_slice, headers=headers, verify=False, timeout=10)
 			if response.status_code != 200:
 				# Response status 400 (Bad Request)
 				print("Bad Request(400). Check filepath, credentials, ...")
+				print(response.headers)
 				break
 		except requests.exceptions.ConnectTimeout:
 			print("Connection Timeout.")
 			break
 		# Shift to next slice
 		start += current_bytes
+
+# ----------------------------------------------------------
+
+def _getToken(host, username, password):
+	data = {
+		'username': username,
+		'password': password,
+		'loginProviderName': 'tmos'
+	}
+	headers = {
+		'Content-Type': 'application/json'
+	}
+	uri = 'https://%s/mgmt/shared/authn/login' % (host)
+	try:
+		response = requests.post(uri, data=json.dumps(data), headers=headers, verify=False, timeout=10)
+		if response.status_code != 200:
+			print("Bad Request(400).")
+			return ""
+	except requests.exceptions.ConnectTimeout:
+		print("Connection Timeout.")
+		return ""
+	return response.json()['token']['token']
+
+# ----------------------------------------------------------
+
+def _extendToken(host, creds):
+	data = {
+		'timeout': '4500'
+	}
+	headers = {
+		'X-F5-Auth-Token': creds,
+		'Content-Type': 'application/json'
+	}
+	uri = 'https://%s/mgmt/shared/authz/tokens/%s' % (host,creds)
+	try:
+		response = requests.patch(uri, data=json.dumps(data), headers=headers, verify=False, timeout=10)
+		return response.status_code
+	except requests.exceptions.ConnectTimeout:
+		print("Connection Timeout.")
+	return ""
 
 # ----------------------------------------------------------
 
@@ -202,7 +268,9 @@ if __name__ == "__main__":
 		if args['general']:
 			print('Selector \'-g|--general\' is not valid with download mode.')
 		else:
-			_download(location, hostname, (username, password), filepath)
+			token = _getToken(hostname, username, password)
+			if token:
+				_download(location, hostname, token, filepath)
 	elif mode == 'upload':
 		if args['general']:
 			location = 2
@@ -218,7 +286,9 @@ if __name__ == "__main__":
 			location = 0
 		else:
 			location = 2
-		_upload(location, hostname, (username, password), filepath)
+		token = _getToken(hostname, username, password)
+		if token:
+			_upload(location, hostname, token, filepath)
 	else:
 		print('Transfer mode not supported.')
 
